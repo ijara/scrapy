@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
+import re
 
 def is_allowed_by_robots(url):
     # Get the base URL
@@ -30,14 +31,17 @@ def scrape_page(url):
         if is_allowed_by_robots(url):
             # Parsear el contenido HTML de la página con BeautifulSoup
             soup = BeautifulSoup(response.text, 'html.parser')
+            regex_pattern = re.compile('MLC-\d*-')
 
-            # Aquí puedes comenzar a extraer la información que necesitas
-            # Por ejemplo, si quieres obtener todos los enlaces de la página:
-            enlaces = soup.find_all('a')
-
-            for enlace in enlaces:
-                print(enlace.get('href'))
-
+            # Extract and save links containing the substring 'MLC'
+            filtered_links = set()
+            with open('filtered_links.txt', 'a') as file:
+                for link in soup.find_all('a', href=True):
+                    href = link.get('href')
+                    if regex_pattern.search(href) and href not in filtered_links:
+                        filtered_links.add(href)
+                        file.write(href + '\n')
+                        print(href)
         else:
             print(f'Acceso no permitido por robots.txt para {url}')
 
@@ -45,7 +49,7 @@ def scrape_page(url):
         print(f'Error al hacer la solicitud HTTP. Código de estado: {response.status_code}')
 
 # URL de la página que quieres hacer scraping
-url = 'https://www.ejemplo.com'
+url = 'https://www.portalinmobiliario.com/arriendo/parcela'
 
 # Verificar si el acceso está permitido según robots.txt antes de hacer scraping
 if is_allowed_by_robots(url):
